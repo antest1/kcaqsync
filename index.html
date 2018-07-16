@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="static/style.css">
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="static/questcode.js"></script>
+<script type="text/javascript" src="static/InputSpinner.js"></script>
+<script type="text/javascript" src="static/qrcode.min.js"></script>
+
+<title>KanColle Quest Sync Tool</title>
+
+<body>
+    <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+        <!-- Brand/logo --><a class="navbar-brand" href="#">KanColle Quest Sync Tool</a>
+    </nav>
+
+    <div class="container ">
+        <div class=" mt-3 mt-sm-3"></div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">KanColle Quest Sync Tool (for Kcanotify)</h5>
+                <div class="mb-2 text-muted">Contact: kcanotify@gmail.com</div>
+                <a href="https://wikiwiki.jp/kancolle/%E4%BB%BB%E5%8B%99" class="btn" target="_blank">攻略Wiki*</a>
+                <a href="http://kancolle.wikia.com/wiki/Quests" class="btn" target="_blank">KanColle Wikia</a>
+                <a href="https://zh.kcwiki.org/wiki/任务" class="btn" target="_blank">舰娘百科</a>
+            </div>
+        </div>
+
+        <div class=" mt-3 mt-sm-3"></div>
+
+        <form name="quest" class="form">
+            <div class="row justify-content-center">
+                <div class="form-group col-sm-12 ">
+                    <select id="quest_list" name='quest_list' class="form-control"></select>
+                </div>
+            </div>
+
+            <div id="counter" class="row justify-content-center">
+
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="form-group col-sm-4 ">
+                    <button id="quest_add" type="button" class="btn btn-primary btn-block">Add</button>
+                </div>
+                <div class="form-group col-sm-4 ">
+                    <button id="quest_code_gen" type="button" class="btn btn-success btn-block">Generate Code</button>
+                </div>
+            </div>
+
+            <div class="card questcard">
+                <div class="card-header">
+                    Current Quest List <span id="quest_clear" class="delete">(CLEAR)</span>
+                </div>
+                <div class="card-body">
+
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <div class="modal fade" id="qrcode_modal" tabindex="-1" role="dialog" aria-labelledby="qrcode_modal_label" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="qrcode_modal_label">QR Code</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="qrcode"></div>
+                    <div id="qrcode_content"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class=" mt-3 mt-sm-3"></div>
+    <footer class="footer">
+        <div class="text-center">
+            <div class="footer-lang"><span class="text-muted">
+                    <a href="?lang=ko">한국어</a>
+                    <a href="?lang=en">English</a>
+                    <a href="?lang=jp">日本語</a>
+                    <a href="?lang=scn">中文(简体)</a>
+                    <a href="?lang=tcn">中文(繁體)</a>
+            </div>
+            <div class="footer-copy"><span class="text-muted">Copyright (c) 2018 <a href="https://github.com/antest1" target="_blank">antest1</a> All rights reserved.</div>
+        </div>
+    </footer>
+</body>
+<script>
+    var tr_data = {};
+    var qtrack_data = {};
+    var quest_list = [];
+
+    var lang = "jp";
+    var lang_list = ["ko", "en", "jp", "scn", "tcn"];
+
+    var url = new URL(window.location.href);
+    var c = url.searchParams.get("lang");
+    if ($.inArray(c, lang_list) > -1) {
+        lang = c;
+    } else if (localStorage.kqs_lang) {
+        lang = localStorage.kqs_lang;
+    }
+    localStorage.setItem("kqs_lang", lang);
+
+    var qrcode = new QRCode(document.getElementById("qrcode"), {
+        width: 128,
+        height: 128
+    });
+
+    var gen_code_from_page = function() {
+        var code_list = [];
+        var quest_list = $(".questcard .card-body div");
+        for (var i = 0; i < quest_list.length; i++) {
+            code_list.push(quest_list[i].getAttribute("qcode"));
+        }
+        var code_all = code_list.join("");
+        return code_all;
+    }
+
+    $("#counter").css("display", "none");
+    $("#quest_list").change(function() {
+        $("#counter").empty();
+        var key = $(this).val();
+        var cond = qtrack_data[key]["cond"];
+        for (var i = 0; i < cond.length; i++) {
+            $("#counter").append("<div id=\"item_" + i + "\" class=\"form-group col-sm-3 q_cnt\">" +
+                "<input type=\"number\" value=\"0\" min=\"0\" max=\"" + cond[i] + "\" step=\"1\"/></div>");
+        }
+        $("input[type='number']").InputSpinner();
+    });
+
+
+    $.ajax({
+        type: "GET",
+        crossDomain: true,
+        url: "static/quest_track.json",
+        success: function(data, status) {
+            qtrack_data = data;
+            $.ajax({
+                type: "GET",
+                crossDomain: true,
+                url: "https://raw.githubusercontent.com/antest1/kcanotify-gamedata/master/files/quests-" + lang + ".json",
+                success: function(data, status) {
+                    tr_data = JSON.parse(data);
+                    var optionsAsString = "";
+                    var head_tr = qtrack_data["tr"][lang]
+                    for (var key in qtrack_data) {
+                        if (key == "tr") continue;
+                        var type = tr_data[key]["code"];
+                        var string = "[" + type + "] " + tr_data[key]["name"];
+                        optionsAsString += "<option value='" + key + "'>" + string + "</option>";
+                    }
+                    $("#quest_list").append(optionsAsString);
+                    $("#quest_list").prop("selectedIndex", 0).change();
+                    $("#counter").css("display", "flex");
+
+                    if (localStorage.kqs_data) {
+                        var data = decode_code(localStorage.kqs_data);
+                        for (var i = 0; i < data.length; i++) {
+                            key = data[i][0];
+                            cnt_data = data[i][1];
+                            var track_info = qtrack_data[key]["cond"];
+                            var track_text = [];
+                            for (var j = 0; j < track_info.length; j++) {
+                                val = cnt_data[j];
+                                if (val < 0) val = 0;
+                                if (val > track_info[j]) val = track_info[j];
+                                track_text.push(val + "/" + track_info[j]);
+                            }
+                            add_element(key, cnt_data, track_text);
+                        }
+                    }
+                    localStorage.setItem("kqs_data", gen_code_from_page());
+                }
+            });
+        }
+    });
+
+    var add_element = function(key, cnt_data, track_text) {
+        var code = convert_to_code(key, cnt_data);
+        var type = tr_data[key]["code"];
+        var string = "[" + type + "] " + tr_data[key]["name"] + " (" + track_text + ") <span id=\"d" +
+            key + "\" class=\"qt_delete delete\">X</span>";
+        $(".q" + key).remove();
+        var text = "<div qcode=\"" + code + "\" class=\"card-text q" + key + "\">" + string + "</div>";
+        $(".questcard .card-body").append(text);
+        $("#d" + key).click(function() {
+            $(".q" + key).remove();
+            localStorage.setItem("kqs_data", gen_code_from_page());
+        });
+    }
+
+    $("#quest_add").click(function() {
+        var key = $("#quest_list").val();
+        var type = tr_data[key]["code"];
+        var track_info = qtrack_data[key]["cond"];
+        var track_text = [];
+        var cnt_data = [];
+        for (var i = 0; i < track_info.length; i++) {
+            val = parseInt($("#item_" + i + " input").val());
+            if (val < 0) $("#item_" + i + " input").val(0);
+            if (val > track_info[i]) $("#item_" + i + " input").val(track_info[i]);
+            track_text.push($("#item_" + i + " input").val() + "/" + track_info[i]);
+            cnt_data.push(parseInt($("#item_" + i + " input").val()));
+        }
+        track_text = track_text.join(", ");
+        add_element(key, cnt_data, track_text);
+        localStorage.setItem("kqs_data", gen_code_from_page());
+    });
+
+    $("#quest_code_gen").click(function() {
+        var code = gen_code_from_page();
+        if (code.length > 0) {
+            qrcode.makeCode(code);
+            $("#qrcode_content").text(code);
+            $('#qrcode_modal').modal();
+        } else {
+            alert("quest list empty");
+        }
+    });
+
+
+    $("#quest_clear").click(function() {
+        $(".questcard .card-body").empty();
+        localStorage.setItem("kqs_data", "");
+    });
+</script>
