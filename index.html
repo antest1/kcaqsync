@@ -34,8 +34,11 @@
 
         <form name="quest" class="form">
             <div class="row justify-content-center">
-                <div class="form-group col-sm-12 ">
+                <div class="form-group col-sm-11 ">
                     <select id="quest_list" name='quest_list' class="form-control"></select>
+                </div>
+				 <div class="form-group col-sm-1 ">
+                    <button id="quest_desc" type="button" class="btn btn-secondary btn-block" data-toggle="modal" data-target="#questdesc_modal">DESC</button>
                 </div>
             </div>
 
@@ -76,6 +79,25 @@
                 <div class="modal-body text-center">
                     <div id="qrcode"></div>
                     <div id="qrcode_content"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+	
+	<div class="modal fade" id="questdesc_modal" tabindex="-1" role="dialog" aria-labelledby="questdesc_modal_label" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="questdesc_modal_label">Quest Content</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="quest_modal_content" class="modal-body">
+                    
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -130,6 +152,17 @@
         return code_all;
     }
 
+	var transform_data = function(data) {
+		var title = "<h5>[" + data["code"] + "] " + data["name"] + "</h5>";
+		var desc = "<div>" + data["desc"] + "</div>";
+		var memo = "";
+		if (data["memo"] != undefined) {
+			memo = "<div style=\"color: gray; font-size: 0.8em;\">" + data["memo"] + "</div>";
+		}
+		return title + desc + memo;
+	}
+	
+	var content = "";
     $("#counter").css("display", "none");
     $("#quest_list").change(function() {
         $("#counter").empty();
@@ -140,7 +173,9 @@
                 "<input type=\"number\" value=\"0\" min=\"0\" max=\"" + cond[i] + "\" step=\"1\"/></div>");
         }
         $("input[type='number']").InputSpinner();
-    });
+		content = transform_data(tr_data[key]);
+		$("#quest_modal_content").html(content);	
+	});
 
 
     $.ajax({
