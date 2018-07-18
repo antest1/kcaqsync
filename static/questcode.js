@@ -12,14 +12,12 @@ var convert_to_code = function(key, count) {
 				chain.push("=");
 			} else if (key == 221) {	
 				chain.push("=");			
-				chain.push(chars[Math.floor(count[i] / chars.length)]);
 				chain.push(chars[count[i] % chars.length]);
 			}
 		} else {
 			chain.push(chars[count[i]]);
 		}
 	}
-	chain.reverse();
 	code = chain.join("");
 	code_size = code.length;
 	return code_size + code
@@ -36,7 +34,6 @@ var decode_code = function(code) {
 			text += code[key+i];
 		}
 		text = text.split("")
-		text.reverse()
 		var quest_code = "" + (chars.indexOf(text[0]) * chars.length + chars.indexOf(text[1]))
 		var quest_count = [];
 		for (var i = 2; i < text.length; i++) {
@@ -44,9 +41,8 @@ var decode_code = function(code) {
 				if (quest_code == "214") {
 					quest_count.push(chars.length);
 				} else if (quest_code == "221") {
-					count_high = chars.indexOf(text[i+1]);
-					count_low = chars.indexOf(text[i+2]);
-					quest_count.push(count_high * chars.length + count_low);
+					count_low = chars.indexOf(text[i+1]);
+					quest_count.push(chars.length + count_low);
 					break
 				}
 			} else {
