@@ -1,6 +1,6 @@
 var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-var convert_to_code = function(key, count) {
+var convert_to_code = function(key, count, active) {
 	var text = "";
 	var key = parseInt(key)
 	var key_high = Math.floor(key / chars.length);
@@ -18,7 +18,8 @@ var convert_to_code = function(key, count) {
 			chain.push(chars[count[i]]);
 		}
 	}
-	code = chain.join("");
+	code_active = active ? "1" : "0";
+	code = code_active + chain.join("");	
 	code_size = code.length;
 	return code_size + code
 }
@@ -29,8 +30,9 @@ var decode_code = function(code) {
 	while (key < code.length) {
 		var text = "";
 		var size = parseInt(code[key]);
-		key += 1;
-		for (var i = 0; i < size; i++) {
+		var active = parseInt(code[key+1]);
+		key += 2;
+		for (var i = 0; i < size - 1; i++) {
 			text += code[key+i];
 		}
 		text = text.split("")
@@ -49,8 +51,8 @@ var decode_code = function(code) {
 				quest_count.push(chars.indexOf(text[i]))
 			}
 		}
-		code_list.push([quest_code, quest_count])
-		key += size;
+		code_list.push([quest_code, quest_count, active])
+		key += (size - 1);
 	}
 	return code_list;
 }
