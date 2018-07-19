@@ -15,6 +15,8 @@ body {
 
 #qrcode_content { color: grey; font-size: 0.8em; margin-top: 5px; }
 
+.inactive { color: lightgrey; }
+
 .footer {
 	position: absolute;
 	bottom: 0;
