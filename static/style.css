@@ -13,7 +13,7 @@ body {
 
 #qrcode { width:128px; height:128px; margin: 0 auto; }
 
-#qrcode_content { color: grey; font-size: 0.8em; margin-top: 5px; }
+#qrcode_content { color: grey; font-size: 0.8em; margin-top: 5px; word-break: break-all; }
 
 .inactive { color: lightgrey; }
 
