@@ -51,11 +51,14 @@
             </div>
 
             <div class="row justify-content-center">
-                <div class="form-group col-sm-6 ">
+                <div class="form-group col-sm-4 ">
                     <button id="quest_add" type="button" class="btn btn-primary btn-block">Add</button>
                 </div>
-                <div class="form-group col-sm-6 ">
+                <div class="form-group col-sm-4 ">
                     <button id="quest_code_gen" type="button" class="btn btn-success btn-block">Generate Code</button>
+                </div>
+				<div class="form-group col-sm-4 ">
+                    <button id="quest_code_load" type="button" class="btn btn-danger btn-block">Load from Code</button>
                 </div>
             </div>
 
@@ -71,6 +74,28 @@
         </form>
     </div>
 
+	<div class="modal fade" id="decode_modal" tabindex="-1" role="dialog" aria-labelledby="decode_modal_label" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="decode_modal_label">Load Data from Code</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+					 <div class="form-group">
+						<input type="text" class="form-control" id="decode_target_code"/ placeholder="Enter Quest Code">
+					</div>
+                </div>
+                <div class="modal-footer">
+					  <button type="button" id="load_code_from_modal" class="btn btn-primary" data-dismiss="modal">Load</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+	
     <div class="modal fade" id="qrcode_modal" tabindex="-1" role="dialog" aria-labelledby="qrcode_modal_label" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -101,7 +126,7 @@
                     </button>
                 </div>
                 <div id="quest_modal_content" class="modal-body">
-                    
+						
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -338,6 +363,41 @@
         } else {
             alert("quest list empty");
         }
+    });
+	
+	$("#load_code_from_modal").click(function() {
+		var code = $("#decode_target_code").val();
+		if (check_code(code)) {
+			$(".questcard .card-body").empty();
+			localStorage.setItem("kqs_data", "");
+			var data = decode_code(code);
+			for (var i = 0; i < data.length; i++) {
+				key = data[i][0];
+				cnt_data = data[i][1];
+				active = data[i][2];
+				var track_text = "";
+				if (qtrack_data.hasOwnProperty(key)) {
+					var track_info = qtrack_data[key]["cond"];
+					var track_text_list = [];
+					for (var j = 0; j < track_info.length; j++) {
+						val = cnt_data[j];
+						if (val < 0) val = 0;
+						if (val > track_info[j]) val = track_info[j];
+						track_text_list.push(val + "/" + track_info[j]);
+					}							
+					track_text = "(" + track_text_list.join(", ") + ")";                        
+				} 
+				add_element(key, cnt_data, active, track_text);
+			}
+            localStorage.setItem("kqs_data", gen_code_from_page());
+		} else {
+			$("#decode_target_code").val("");
+			alert("error: invalid value!");
+		}
+	});
+	
+	$("#quest_code_load").click(function() {
+		$('#decode_modal').modal();
     });
 
 

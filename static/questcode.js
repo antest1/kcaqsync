@@ -24,6 +24,22 @@ var convert_to_code = function(key, count, active) {
 	return code_size + code
 }
 
+var check_code = function(code) {
+	if (code === "-") {
+		return false;
+	}
+	var key = 0;
+	try {
+		while (key < code.length) {
+			var size = parseInt(code.substring(key, key+1));
+			key += 1 + size;
+		}		
+		return key == code.length;
+	} catch {
+		return false;
+	}
+}
+
 var decode_code = function(code) {
 	var code_list = [];
 	var key = 0;
